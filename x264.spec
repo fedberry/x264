@@ -15,7 +15,7 @@ License:  GPLv2
 Group:    Applications/Multimedia
 Url:      http://developers.videolan.org/x264.html
 Source0:	http://repo.or.cz/x264.git/snapshot/%{commit0}.tar.gz#/%{name}-%{shortcommit0}.tar.gz
-Source1: 	x264-snapshot.sh
+Source1:    x264-snapshot.sh
 BuildRequires:  nasm
 BuildRequires:  pkgconfig
 BuildRequires:  yasm-devel >= 1.2.0
