@@ -1,27 +1,25 @@
 %global api 152
 %global gitdate 20170926
-%global commit0 ba24899b0bf23345921da022f7a51e0c57dbe73d
-%global shortcommit0 %(c=%{commit0}; echo ${c:0:7})
-%global gver .git%{shortcommit0}
+%global commit ba24899b0bf23345921da022f7a51e0c57dbe73d
+%global commit_short %(c=%{commit}; echo ${c:0:7})
+%global gver .git%{commit_short}
 
 %bcond_with 10bit-depth
 
-Name:     x264
-Version:  0.%{api}
-Release:  5%{?gver}%{?dist}
-Epoch:    1
-Summary:  A free h264/avc encoder - encoder binary
-License:  GPLv2
-Group:    Applications/Multimedia
-Url:      http://developers.videolan.org/x264.html
-Source0:	http://repo.or.cz/x264.git/snapshot/%{commit0}.tar.gz#/%{name}-%{shortcommit0}.tar.gz
-Source1:    x264-snapshot.sh
+Name:       x264
+Version:    0.%{api}
+Release:    6%{?gver}%{?dist}
+Summary:    A free h264/avc encoder - encoder binary
+License:    GPLv2
+Group:      Applications/Multimedia
+Url:        http://developers.videolan.org/x264.html
+Source0:    http://repo.or.cz/x264.git/snapshot/%{commit}.tar.gz#/%{name}-%{commit_short}.tar.gz
+
 BuildRequires:  nasm
 BuildRequires:  pkgconfig
 BuildRequires:  yasm-devel >= 1.2.0
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Provides:	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name}-libs = %{epoch}:%{version}-%{release}
+Provides:   %{name} = %{version}-%{release}
+Requires:   %{name}-libs = %{version}-%{release}
 
 
 %description
@@ -54,24 +52,26 @@ command line tool x264 can handle only raw YUV 4:2:0 streams at the
 moment so please use mencoder or another tool that supports x264 library
 for all other file types.
 
+
 %package libs
 Summary: Library for encoding H264/AVC video streams
 Group: Development/Libraries
-Provides:	%{name}-libs = %{version}-%{release}
-Provides:	%{name}-libs = %{epoch}:%{version}-%{release}
+Provides:   %{name}-libs = %{version}-%{release}
+Provides:   %{name}-libs = %{version}-%{release}
 
 %description libs
 x264 is a free library for encoding H264/AVC video streams, written from
 scratch.
 
+
 %package devel
-Summary:        Libraries and include file for the %{name} encoder
-Group:          Development/Libraries
-Requires:	%{name}-libs = %{epoch}:%{version}-%{release}
-Requires: 	pkgconfig
-Provides:       x264-devel = %{version}-%{release}
-Provides:	x264-devel = %{epoch}:%{version}-%{release}
-Obsoletes:      x264-devel < %{version}
+Summary:    Libraries and include file for the %{name} encoder
+Group:      Development/Libraries
+Requires:   %{name}-libs = %{version}-%{release}
+Requires:   pkgconfig
+Provides:   x264-devel = %{version}-%{release}
+Provides:   x264-devel = %{version}-%{release}
+Obsoletes:  x264-devel < %{version}
 
 %description devel
 x264 is a free library for encoding next-generation H264/AVC video
@@ -83,46 +83,43 @@ package contains a static library and a header needed for the
 development with libx264. This library is needed to build
 mplayer/mencoder with H264 encoding support.
 
+
 %prep
-%autosetup -n x264-%{shortcommit0}
+%autosetup -n x264-%{commit_short}
+
 
 %build
+#pushd %{_builddir}/%{name}-%{commit_short}
 
-#  pushd %{_builddir}/%{name}-%{shortcommit0}
-
-%configure --enable-shared \
-      --enable-pic 
-
+%configure --enable-shared --enable-pic
 make %{?_smp_mflags}
 
 %if %{with 10bit-depth}
-cp -r %{_builddir}/%{name}-%{shortcommit0} %{_builddir}/%{name}-10bit
+cp -r %{_builddir}/%{name}-%{commit_short} %{_builddir}/%{name}-10bit
+
 pushd %{_builddir}/%{name}-10bit
-
-%configure --enable-shared \
-      --enable-pic \
-      --bit-depth=10
-
+%configure --enable-shared --enable-pic --bit-depth=10
 make %{?_smp_mflags}
 %endif
 
 
 %install
+make -C %{_builddir}/%{name}-%{commit_short} DESTDIR=%{buildroot} install-cli
 
-  make -C %{_builddir}/%{name}-%{shortcommit0} DESTDIR=%{buildroot} install-cli
 %if %{with 10bit-depth}
-  install -m 755 %{_builddir}/%{name}-10bit/x264 %{buildroot}/%{_bindir}/x264-10bit
+install -m 755 %{_builddir}/%{name}-10bit/x264 %{buildroot}/%{_bindir}/x264-10bit
 %endif
 
-  install -dm 755 %{buildroot}/%{_libdir}
-  make -C %{_builddir}/%{name}-%{shortcommit0} DESTDIR=%{buildroot} install-lib-shared %{?_smp_mflags}
+install -dm 755 %{buildroot}/%{_libdir}
+make -C %{_builddir}/%{name}-%{commit_short} DESTDIR=%{buildroot} install-lib-shared %{?_smp_mflags}
+
 %if %{with 10bit-depth}
   make -C %{_builddir}/%{name}-10bit DESTDIR=%{buildroot} install-lib-shared %{?_smp_mflags}
 %endif
 
-%post -p /sbin/ldconfig
 
-%postun -p /sbin/ldconfig
+%ldconfig_scriptlets
+
 
 %files
 %{_bindir}/x264
@@ -130,11 +127,12 @@ make %{?_smp_mflags}
 %{_bindir}/x264-10bit
 %endif
 
+
 %files libs
 %{_libdir}/libx264.so.%{api}
 
+
 %files devel
-%defattr(0644,root,root)
 %{_includedir}/x264.h
 %{_includedir}/x264_config.h
 %{_libdir}/pkgconfig/x264.pc
@@ -142,14 +140,18 @@ make %{?_smp_mflags}
 
 
 %changelog
+* Fri Aug 03 2018 Vaughan Agrez <devel at agrez dot net> 0.152-6.gitba24899
+- Import into Fedberry (thanks UnitedRPMS)
+- Clean spec
+- Die Epoch die!
 
-* Sun May 27 2018 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-5.gitba24899  
+* Sun May 27 2018 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-5.gitba24899
 - Automatic Mass Rebuild
 
-* Sat Feb 24 2018 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-4.gitba24899  
+* Sat Feb 24 2018 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-4.gitba24899
 - Automatic Mass Rebuild
 
-* Wed Dec 06 2017 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-3.gitba24899  
+* Wed Dec 06 2017 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-3.gitba24899
 - Automatic Mass Rebuild
 
 * Tue Sep 26 2017 Unitedrpms Project <unitedrpms AT protonmail DOT com> 0.152-2.gitba24899
